@@ -29,37 +29,25 @@ func (c *Client) Authenticate() []error {
 }
 
 func (c *Client) GetCobSessionToken() (string, []error) {
-	req := gorequest.New()
-	_, body, errs := req.Post("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/authenticate/coblogin").
-		Type("form").
-		Send("cobrandLogin=" + c.Login).
-		Send("cobrandPassword=" + c.Password).
-		End()
-	if errs != nil {
-		return "", errs
-	}
 	var j struct {
 		CobrandConversationCredentials struct {
 			SessionToken string
 		}
 	}
-	if err := json.Unmarshal([]byte(body), &j); err != nil {
-		return "", []error{err}
+	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/authenticate/coblogin", struct {
+		CobrandLogin    string `json:"cobrandLogin"`
+		CobrandPassword string `json:"cobrandPassword"`
+	}{
+		c.Login,
+		c.Password,
+	}, &j)
+	if errs != nil {
+		return "", errs
 	}
 	return j.CobrandConversationCredentials.SessionToken, nil
 }
 
 func (c *Client) GetUserSessionToken(login, password string) (string, []error) {
-	req := gorequest.New()
-	_, body, errs := req.Post("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/authenticate/login").
-		Type("form").
-		Send("login=" + login).
-		Send("password=" + password).
-		Send("cobSessionToken=" + c.SessionToken).
-		End()
-	if errs != nil {
-		return "", errs
-	}
 	var j struct {
 		UserContext struct {
 			ConversationCredentials struct {
@@ -67,8 +55,44 @@ func (c *Client) GetUserSessionToken(login, password string) (string, []error) {
 			}
 		}
 	}
-	if err := json.Unmarshal([]byte(body), &j); err != nil {
-		return "", []error{err}
+	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/authenticate/login", struct {
+		Login           string `json:"login"`
+		Password        string `json:"password"`
+		CobSessionToken string `json:"cobSessionToken"`
+	}{
+		login,
+		password,
+		c.SessionToken,
+	}, &j)
+	if errs != nil {
+		return "", errs
 	}
 	return j.UserContext.ConversationCredentials.SessionToken, nil
+}
+
+func (c *Client) GetAccounts(token string) ([]map[string]interface{}, []error) {
+	var j []map[string]interface{}
+	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/SiteAccountManagement/getSiteAccounts", struct {
+		Cobsessiontoken  string `json:"cobSessionToken"`
+		UserSessionToken string `json:"userSessionToken"`
+	}{
+		c.SessionToken,
+		token,
+	}, &j)
+	return j, errs
+}
+
+func request(url string, content interface{}, data interface{}) []error {
+	req := gorequest.New()
+	_, body, errs := req.Post(url).
+		Type("form").
+		Send(content).
+		End()
+	if errs != nil {
+		return errs
+	}
+	if err := json.Unmarshal([]byte(body), data); err != nil {
+		return []error{err}
+	}
+	return nil
 }
