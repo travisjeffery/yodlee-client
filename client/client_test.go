@@ -41,3 +41,14 @@ func TestGetAccounts(t *testing.T) {
 	assert.Nil(t, errs)
 	assert.NotZero(t, len(accounts))
 }
+
+func TestGetTransactions(t *testing.T) {
+	c.Authenticate()
+	login := os.Getenv("YODLEE_USER_LOGIN")
+	pass := os.Getenv("YODLEE_USER_PASSWORD")
+	token, err := c.GetUserSessionToken(login, pass)
+	assert.Nil(t, err)
+	transactions, errs := c.GetTransactions(token, NewGetTransactionInput())
+	assert.Nil(t, errs)
+	assert.NotNil(t, transactions)
+}

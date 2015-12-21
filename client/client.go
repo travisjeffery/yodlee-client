@@ -73,13 +73,52 @@ func (c *Client) GetUserSessionToken(login, password string) (string, []error) {
 func (c *Client) GetAccounts(token string) ([]map[string]interface{}, []error) {
 	var j []map[string]interface{}
 	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/SiteAccountManagement/getSiteAccounts", struct {
-		Cobsessiontoken  string `json:"cobSessionToken"`
+		CobSessiontoken  string `json:"cobSessionToken"`
 		UserSessionToken string `json:"userSessionToken"`
 	}{
 		c.SessionToken,
 		token,
 	}, &j)
 	return j, errs
+}
+
+type GetTransactionInput struct {
+	ContainerType    string `json:"transactionSearchRequest.containerType"`
+	HigherFetchLimit string `json:"transactionSearchRequest.higherFetchLimit"`
+	LowerFetchLimit  string `json:"transactionSearchRequest.lowerFetchLimit"`
+	IgnoreUserInput  string `json:"transactionSearchRequest.ignoreUserInput"`
+	EndNumber        int    `json:"transactionSearchRequest.resultRange.endNumber"`
+	StartNumber      int    `json:"transactionSearchRequest.resultRange.startNumber"`
+	CurrencyCode     string `json:"transactionSearchRequest.searchFilter.currencyCode"`
+}
+
+func NewGetTransactionInput() *GetTransactionInput {
+	return &GetTransactionInput{
+		ContainerType:    "All",
+		HigherFetchLimit: "500",
+		LowerFetchLimit:  "1",
+		IgnoreUserInput:  "true",
+		EndNumber:        5,
+		StartNumber:      1,
+		CurrencyCode:     "USD",
+	}
+}
+
+func (c *Client) GetTransactions(token string, input *GetTransactionInput) (map[string]interface{}, []error) {
+	var j map[string]interface{}
+	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/TransactionSearchService/executeUserSearchRequest", struct {
+		*GetTransactionInput
+		CobSessionToken  string `json:"cobSessionToken"`
+		UserSessionToken string `json:"userSessionToken"`
+	}{
+		input,
+		c.SessionToken,
+		token,
+	}, &j)
+	if errs != nil {
+		return nil, errs
+	}
+	return j, nil
 }
 
 func request(url string, content interface{}, data interface{}) []error {
