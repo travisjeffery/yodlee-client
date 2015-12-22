@@ -6,12 +6,14 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
+// Client is the thing you use to talk to Yodlee's API.
 type Client struct {
 	Login        string
 	Password     string
 	SessionToken string
 }
 
+// New creates a `Client`.
 func New(login, password string) *Client {
 	return &Client{
 		Login:    login,
@@ -19,6 +21,7 @@ func New(login, password string) *Client {
 	}
 }
 
+// Authenticate authenticates your client with Yodlee.
 func (c *Client) Authenticate() []error {
 	token, errs := c.GetCobSessionToken()
 	if errs != nil {
@@ -28,6 +31,7 @@ func (c *Client) Authenticate() []error {
 	return nil
 }
 
+// GetCobSessionToken autenticates a cobrand.
 func (c *Client) GetCobSessionToken() (string, []error) {
 	var j struct {
 		CobrandConversationCredentials struct {
@@ -47,6 +51,7 @@ func (c *Client) GetCobSessionToken() (string, []error) {
 	return j.CobrandConversationCredentials.SessionToken, nil
 }
 
+// GetUserSessionToken authenticates a user's login and password.
 func (c *Client) GetUserSessionToken(login, password string) (string, []error) {
 	var j struct {
 		UserContext struct {
@@ -70,6 +75,7 @@ func (c *Client) GetUserSessionToken(login, password string) (string, []error) {
 	return j.UserContext.ConversationCredentials.SessionToken, nil
 }
 
+// GetAccountsOutput represents an account.
 type GetAccountsOutput struct {
 	Created                string `json:"created"`
 	CredentialsChangedTime int    `json:"credentialsChangedTime"`
@@ -135,6 +141,7 @@ type GetAccountsOutput struct {
 	} `json:"siteRefreshInfo"`
 }
 
+// GetAccounts gets the accounts for the given user session token.
 func (c *Client) GetAccounts(token string) ([]*GetAccountsOutput, []error) {
 	var output []*GetAccountsOutput
 	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/SiteAccountManagement/getSiteAccounts", struct {
@@ -147,6 +154,7 @@ func (c *Client) GetAccounts(token string) ([]*GetAccountsOutput, []error) {
 	return output, errs
 }
 
+// GetTransactionInput represents the arguments used to fetch transactions.
 type GetTransactionInput struct {
 	ContainerType    string `json:"transactionSearchRequest.containerType"`
 	HigherFetchLimit string `json:"transactionSearchRequest.higherFetchLimit"`
@@ -157,6 +165,7 @@ type GetTransactionInput struct {
 	CurrencyCode     string `json:"transactionSearchRequest.searchFilter.currencyCode"`
 }
 
+// NewGetTransactionInput creates a `GetTransactionInput` with defaults set.
 func NewGetTransactionInput() *GetTransactionInput {
 	return &GetTransactionInput{
 		ContainerType:    "All",
@@ -169,6 +178,7 @@ func NewGetTransactionInput() *GetTransactionInput {
 	}
 }
 
+// GetTransactionsOutput represents the results of getting the transactions for a user.
 type GetTransactionsOutput struct {
 	CountOfAllTransaction      int `json:"countOfAllTransaction"`
 	CountOfProjectedTxns       int `json:"countOfProjectedTxns"`
@@ -282,6 +292,7 @@ type GetTransactionsOutput struct {
 	} `json:"searchResult"`
 }
 
+// GetTransactions gets transactions for the user and input.
 func (c *Client) GetTransactions(token string, input *GetTransactionInput) (*GetTransactionsOutput, []error) {
 	output := &GetTransactionsOutput{}
 	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/TransactionSearchService/executeUserSearchRequest", struct {
@@ -299,6 +310,7 @@ func (c *Client) GetTransactions(token string, input *GetTransactionInput) (*Get
 	return output, nil
 }
 
+// request is a helper for making requests to Yodlee and formatting their responses.
 func request(url string, content interface{}, data interface{}) []error {
 	req := gorequest.New()
 	_, body, errs := req.Post(url).
