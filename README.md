@@ -2,12 +2,12 @@
 
 Yodlee client for Go.
 
-View the docs.
+View the [docs](https://godoc.org/github.com/travisjeffery/yodlee-client/client).
 
 ## Installation
 
 ```
-go get github.com/travisjeffery/yodlee-client
+go get github.com/travisjeffery/yodlee-client/client
 ```
 
 ## Example
