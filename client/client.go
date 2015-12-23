@@ -1,4 +1,4 @@
-package client
+package yodlee
 
 import (
 	"encoding/json"
