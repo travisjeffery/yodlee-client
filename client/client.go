@@ -310,6 +310,67 @@ func (c *Client) GetTransactions(token string, input *GetTransactionInput) (*Get
 	return output, nil
 }
 
+type RegisterOutput struct {
+	EmailAddress      string `json:"emailAddress"`
+	LastLoginTime     int    `json:"lastLoginTime"`
+	LoginCount        int    `json:"loginCount"`
+	LoginName         string `json:"loginName"`
+	PasswordRecovered bool   `json:"passwordRecovered"`
+	UserContext       struct {
+		ApplicationID                  string `json:"applicationId"`
+		ChannelID                      int    `json:"channelId"`
+		CobrandConversationCredentials struct {
+			SessionToken string `json:"sessionToken"`
+		} `json:"cobrandConversationCredentials"`
+		CobrandID               int `json:"cobrandId"`
+		ConversationCredentials struct {
+			SessionToken string `json:"sessionToken"`
+		} `json:"conversationCredentials"`
+		IsPasswordExpired bool   `json:"isPasswordExpired"`
+		Locale            string `json:"locale"`
+		PreferenceInfo    struct {
+			CurrencyCode         string `json:"currencyCode"`
+			CurrencyNotationType struct {
+				CurrencyNotationType string `json:"currencyNotationType"`
+			} `json:"currencyNotationType"`
+			DateFormat   string `json:"dateFormat"`
+			NumberFormat struct {
+				DecimalSeparator  string `json:"decimalSeparator"`
+				GroupPattern      string `json:"groupPattern"`
+				GroupingSeparator string `json:"groupingSeparator"`
+			} `json:"numberFormat"`
+			TimeZone string `json:"timeZone"`
+		} `json:"preferenceInfo"`
+		TncVersion int  `json:"tncVersion"`
+		Valid      bool `json:"valid"`
+	} `json:"userContext"`
+	UserID int `json:"userId"`
+}
+
+type RegisterInput struct {
+	CobSessionToken    string `json:"cobSessionToken"`
+	LoginName          string `json:"userCredentials.loginName"`
+	Password           string `json:"userCredentials.password"`
+	ObjectInstanceType string `json:"userCredentials.objectInstanceType"`
+	EmailAddress       string `json:"userProfile.emailAddress"`
+}
+
+// Register a user.
+func (c *Client) Register(email, password string) (*RegisterOutput, []error) {
+	var output *RegisterOutput
+	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/UserRegistration/register3", &RegisterInput{
+		CobSessionToken:    c.SessionToken,
+		LoginName:          email,
+		Password:           password,
+		EmailAddress:       email,
+		ObjectInstanceType: "com.yodlee.ext.login.PasswordCredentials",
+	}, output)
+	if errs != nil {
+		return nil, errs
+	}
+	return output, nil
+}
+
 // request is a helper for making requests to Yodlee and formatting their responses.
 func request(url string, content interface{}, data interface{}) []error {
 	req := gorequest.New()

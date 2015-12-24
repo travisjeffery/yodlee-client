@@ -52,3 +52,10 @@ func TestGetTransactions(t *testing.T) {
 	assert.Nil(t, errs)
 	assert.NotNil(t, transactions)
 }
+
+func TestRegister(t *testing.T) {
+	c.Authenticate()
+	output, errs := c.Register("test@example.com", "password#")
+	assert.Nil(t, errs)
+	assert.NotNil(t, output)
+}
