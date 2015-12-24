@@ -2,9 +2,12 @@ package yodlee
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/parnurzeal/gorequest"
 )
+
+var ErrNoSessionToken = fmt.Errorf("no session token")
 
 // Client is the thing you use to talk to Yodlee's API.
 type Client struct {
@@ -53,6 +56,9 @@ func (c *Client) GetCobSessionToken() (string, []error) {
 
 // GetUserSessionToken authenticates a user's login and password.
 func (c *Client) GetUserSessionToken(login, password string) (string, []error) {
+	if errs := c.checkSession(); errs != nil {
+		return "", errs
+	}
 	var j struct {
 		UserContext struct {
 			ConversationCredentials struct {
@@ -143,6 +149,9 @@ type GetAccountsOutput struct {
 
 // GetAccounts gets the accounts for the given user session token.
 func (c *Client) GetAccounts(token string) ([]*GetAccountsOutput, []error) {
+	if errs := c.checkSession(); errs != nil {
+		return nil, errs
+	}
 	var output []*GetAccountsOutput
 	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/SiteAccountManagement/getSiteAccounts", struct {
 		CobSessiontoken  string `json:"cobSessionToken"`
@@ -294,6 +303,9 @@ type GetTransactionsOutput struct {
 
 // GetTransactions gets transactions for the user and input.
 func (c *Client) GetTransactions(token string, input *GetTransactionInput) (*GetTransactionsOutput, []error) {
+	if errs := c.checkSession(); errs != nil {
+		return nil, errs
+	}
 	output := &GetTransactionsOutput{}
 	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/TransactionSearchService/executeUserSearchRequest", struct {
 		*GetTransactionInput
@@ -357,6 +369,9 @@ type RegisterInput struct {
 
 // Register a user.
 func (c *Client) Register(email, password string) (*RegisterOutput, []error) {
+	if errs := c.checkSession(); errs != nil {
+		return nil, errs
+	}
 	var output *RegisterOutput
 	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/UserRegistration/register3", &RegisterInput{
 		CobSessionToken:    c.SessionToken,
@@ -369,6 +384,13 @@ func (c *Client) Register(email, password string) (*RegisterOutput, []error) {
 		return nil, errs
 	}
 	return output, nil
+}
+
+func (c *Client) checkSession() []error {
+	if c.SessionToken == "" {
+		return []error{ErrNoSessionToken}
+	}
+	return nil
 }
 
 // request is a helper for making requests to Yodlee and formatting their responses.
