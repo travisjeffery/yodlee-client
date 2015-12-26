@@ -81,15 +81,11 @@ func (c *Client) GetUserSessionToken(login, password string) (string, []error) {
 	return j.UserContext.ConversationCredentials.SessionToken, nil
 }
 
-// GetAccountsOutput represents an account.
+// GetAccountsOutput represents a site account.
 type GetAccountsOutput struct {
 	Created                string `json:"created"`
 	CredentialsChangedTime int    `json:"credentialsChangedTime"`
-	Disabled               bool   `json:"disabled"`
-	IsAgentError           bool   `json:"isAgentError"`
 	IsCustom               bool   `json:"isCustom"`
-	IsSiteError            bool   `json:"isSiteError"`
-	IsUARError             bool   `json:"isUARError"`
 	RetryCount             int    `json:"retryCount"`
 	SiteAccountID          int    `json:"siteAccountId"`
 	SiteInfo               struct {
@@ -108,31 +104,16 @@ type GetAccountsOutput struct {
 			AssetType     int    `json:"assetType"`
 			ContainerName string `json:"containerName"`
 		} `json:"enabledContainers"`
-		HdLogoLastModified   int           `json:"hdLogoLastModified"`
-		IsAlreadyAddedByUser bool          `json:"isAlreadyAddedByUser"`
 		IsCustom             bool          `json:"isCustom"`
-		IsHdLogoAvailable    bool          `json:"isHdLogoAvailable"`
 		IsHeld               bool          `json:"isHeld"`
-		IsOauthEnabled       bool          `json:"isOauthEnabled"`
 		LoginForms           []interface{} `json:"loginForms"`
-		LoginURL             string        `json:"loginUrl"`
 		OrgID                int           `json:"orgId"`
 		Popularity           int           `json:"popularity"`
 		SiteID               int           `json:"siteId"`
 		SiteSearchVisibility bool          `json:"siteSearchVisibility"`
 	} `json:"siteInfo"`
 	SiteRefreshInfo struct {
-		Code               int  `json:"code"`
-		IsMFAInputRequired bool `json:"isMFAInputRequired"`
-		ItemRefreshInfo    []struct {
-			ErrorCode         int `json:"errorCode"`
-			ItemSuggestedFlow struct {
-				SuggestedFlow   string `json:"suggestedFlow"`
-				SuggestedFlowID int    `json:"suggestedFlowId"`
-			} `json:"itemSuggestedFlow"`
-			MemItemID  int `json:"memItemId"`
-			RetryCount int `json:"retryCount"`
-		} `json:"itemRefreshInfo"`
+		Code            int `json:"code"`
 		NextUpdate      int `json:"nextUpdate"`
 		NoOfRetry       int `json:"noOfRetry"`
 		SiteRefreshMode struct {
@@ -153,7 +134,7 @@ func (c *Client) GetAccounts(token string) ([]*GetAccountsOutput, []error) {
 		return nil, errs
 	}
 	var output []*GetAccountsOutput
-	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/SiteAccountManagement/getSiteAccounts", struct {
+	errs := request("https://rest.developer.yodlee.com/services/srest/restserver/v1.0/jsonsdk/SiteAccountManagement/getAllSiteAccounts", struct {
 		CobSessiontoken  string `json:"cobSessionToken"`
 		UserSessionToken string `json:"userSessionToken"`
 	}{
@@ -181,7 +162,7 @@ func NewGetTransactionInput() *GetTransactionInput {
 		HigherFetchLimit: "500",
 		LowerFetchLimit:  "1",
 		IgnoreUserInput:  "true",
-		EndNumber:        5,
+		EndNumber:        500,
 		StartNumber:      1,
 		CurrencyCode:     "USD",
 	}
@@ -192,16 +173,16 @@ type GetTransactionsOutput struct {
 	CountOfAllTransaction      int `json:"countOfAllTransaction"`
 	CountOfProjectedTxns       int `json:"countOfProjectedTxns"`
 	CreditTotalOfProjectedTxns struct {
-		Amount       int    `json:"amount"`
-		CurrencyCode string `json:"currencyCode"`
+		Amount       float64 `json:"amount"`
+		CurrencyCode string  `json:"currencyCode"`
 	} `json:"creditTotalOfProjectedTxns"`
 	CreditTotalOfTxns struct {
 		Amount       float64 `json:"amount"`
 		CurrencyCode string  `json:"currencyCode"`
 	} `json:"creditTotalOfTxns"`
 	DebitTotalOfProjectedTxns struct {
-		Amount       int    `json:"amount"`
-		CurrencyCode string `json:"currencyCode"`
+		Amount       float64 `json:"amount"`
+		CurrencyCode string  `json:"currencyCode"`
 	} `json:"debitTotalOfProjectedTxns"`
 	DebitTotalOfTxns struct {
 		Amount       float64 `json:"amount"`
@@ -232,11 +213,10 @@ type GetTransactionsOutput struct {
 				SumInfoID           int    `json:"sumInfoId"`
 			} `json:"account"`
 			Amount struct {
-				Amount       int    `json:"amount"`
-				CurrencyCode string `json:"currencyCode"`
+				Amount       float64 `json:"amount"`
+				CurrencyCode string  `json:"currencyCode"`
 			} `json:"amount"`
-			CategorisationSourceID int    `json:"categorisationSourceId"`
-			CategorizationKeyword  string `json:"categorizationKeyword"`
+			CategorisationSourceID int `json:"categorisationSourceId"`
 			Category               struct {
 				CategoryID            int    `json:"categoryId"`
 				CategoryName          string `json:"categoryName"`
@@ -249,9 +229,7 @@ type GetTransactionsOutput struct {
 			Description         struct {
 				Description          string `json:"description"`
 				IsOlbUserDescription bool   `json:"isOlbUserDescription"`
-				MerchantName         string `json:"merchantName"`
 				SimpleDescription    string `json:"simpleDescription"`
-				TransactionTypeDesc  string `json:"transactionTypeDesc"`
 				ViewPref             bool   `json:"viewPref"`
 			} `json:"description"`
 			InvestmentTransactionView struct {
@@ -261,7 +239,7 @@ type GetTransactionsOutput struct {
 				LotHandling struct {
 					LotHandlingID int `json:"lotHandlingId"`
 				} `json:"lotHandling"`
-				NetCost int `json:"netCost"`
+				NetCost float64 `json:"netCost"`
 			} `json:"investmentTransactionView"`
 			IsBusiness                   bool     `json:"isBusiness"`
 			IsClosingTxn                 int      `json:"isClosingTxn"`
@@ -274,10 +252,10 @@ type GetTransactionsOutput struct {
 			Memo                         struct{} `json:"memo"`
 			PostDate                     string   `json:"postDate"`
 			Price                        struct {
-				Amount       int    `json:"amount"`
-				CurrencyCode string `json:"currencyCode"`
+				Amount       float64 `json:"amount"`
+				CurrencyCode string  `json:"currencyCode"`
 			} `json:"price"`
-			RunningBalance int `json:"runningBalance"`
+			RunningBalance float64 `json:"runningBalance"`
 			Status         struct {
 				Description          string `json:"description"`
 				LocalizedDescription string `json:"localizedDescription"`
@@ -400,6 +378,7 @@ func request(url string, content interface{}, data interface{}) []error {
 		Type("form").
 		Send(content).
 		End()
+	fmt.Printf("body: %s\n", body)
 	if errs != nil {
 		return errs
 	}
